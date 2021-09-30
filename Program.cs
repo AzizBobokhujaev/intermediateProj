@@ -119,7 +119,7 @@ namespace intermediateProj
                     {
                         count += 1;
                     }
-                    Console.Write("Сколько закрытых кредитных историй у ввас на счету: "); var creditHistory = Convert.ToInt32(Console.ReadLine());
+                    Console.Write("Сколько закрытых кредитных историй у вас на счету: "); var creditHistory = Convert.ToInt32(Console.ReadLine());
                     if (creditHistory>=3)
                     {
                         count += 2;
@@ -149,24 +149,24 @@ namespace intermediateProj
                     {
                         count += 0;
                     }
-                    Console.Write("Напишите цель кредита: "); var purposeCredit = Console.ReadLine();
+                    var purposeCredit = "";
                     Console.Write("Цель кредита: \n1.(Бытовая техника) \n2.(Ремонт) \n3.(Телефон) \n(Прочее-> любая кнопка) \n Выберите один: ");var p = Convert.ToInt32(Console.ReadLine());
                     switch (p)
                     {
                         case 1:
-                            
+                            purposeCredit = "Appliances";
                             count += 2;
                             break;
                         case 2:
-                           
+                            purposeCredit = "Repair";
                             count += 1;
                             break;
                         case 3:
-                            
+                            purposeCredit = "Phone";
                             count += 0;
                             break;
                         default:
-                           
+                            purposeCredit = "Other";
                             count -= 1;
                             break;
                     }
@@ -185,6 +185,36 @@ namespace intermediateProj
                         try
                         {
                             CreateForm(sqlConnection, ID, new Form() { Age = age, Income = income, CreditSum = creditSum, LoanAmountFromIncome = (int)r, CreditHistory = creditHistory, OverdueCredit = overdueCredit, PurposeCredit = purposeCredit, TermCredit = termCredit, CreatedAt = "2021-09-30", ClientId = ID });
+                            Console.WriteLine("");
+                            var percent = 12;
+                            var percentPerCreditData = (creditSum * percent) / 100;
+                            var monthlyPayment = creditSum;
+                            monthlyPayment = (monthlyPayment+percentPerCreditData)/(termCredit - 1);
+                            var credit1 = new Credit()
+                            {
+                                Ball = count,
+                                MonthlyPayment = (int)monthlyPayment,
+                                Sum = (int)creditSum,
+                                Persent = percent,
+                                ClientId = ID
+                            };
+                            CreateCredit(sqlConnection, ID, credit1);
+                            Console.WriteLine($"Кредить на имя пользователья ({client2.Login}) оформлена успешно");
+                            Console.WriteLine($"Ежемесячный платеж составляет: { Math.Round(monthlyPayment, 2)} сомони");
+                            Console.WriteLine("Постарайтесь вовремя погасить кредит");
+                    }
+                        catch (Exception ex)
+                    {
+
+                        Console.WriteLine(ex.Message); ;
+                    }
+            }
+                    else
+                    {
+                        Console.WriteLine("К сожелению ваша заявка не одобрена");
+                        try
+                        {
+                            CreateForm(sqlConnection, ID, new Form() { Age = age, Income = income, CreditSum = creditSum, LoanAmountFromIncome = (int)r, CreditHistory = creditHistory, OverdueCredit = overdueCredit, PurposeCredit = purposeCredit, TermCredit = termCredit, CreatedAt = "2021-09-30", ClientId = ID });
 
                         }
                         catch (Exception ex)
@@ -192,10 +222,6 @@ namespace intermediateProj
 
                             Console.WriteLine(ex.Message); ;
                         }
-                    }
-                    else
-                    {
-                        Console.WriteLine("К сожелению ваша заявка не одобрена");
                     }
                     
                     
@@ -206,7 +232,18 @@ namespace intermediateProj
 
             sqlConnection.Close();
         }
-
+        static void CreateCredit(SqlConnection sqlConnection,int id, Credit credit )
+        {
+            var sqlQuery = $"INSERT INTO CREDIT (Ball, MonthlyPayment, Sum, Persent, ClientId) VALUES" +
+                $" ({credit.Ball},{credit.MonthlyPayment},{credit.Sum},{credit.Persent},{id})";
+            var sqlCommand = sqlConnection.CreateCommand();
+            sqlCommand.CommandText = sqlQuery;
+            var result = sqlCommand.ExecuteNonQuery();
+            if (result > 0)
+            {
+                Console.WriteLine($"");
+            }
+        }
         private static void CreateForm(SqlConnection sqlConnection, int id, Form form)
         {
             var sqlQuery = $"INSERT INTO FORME ( Age,Income,CreditSum,LoanAmountFromIncome,CreditHistory, OverdueCredit, PurposeCredit, TermCredit, CreatedAt, ClientId) VALUES" +
@@ -216,7 +253,7 @@ namespace intermediateProj
             var result = sqlCommand.ExecuteNonQuery();
             if (result > 0)
             {
-                Console.WriteLine("Form accepted for processing");
+                Console.WriteLine("");
             }
             
             
@@ -312,6 +349,24 @@ namespace intermediateProj
             CreatedAt = createdAt;
             ClientId = clientId;
         }
+    }
+    public class Credit
+    {
+        public int Ball { get; set; }
+        public int MonthlyPayment { get; set; }
+        public int Sum { get; set; }
+        public int Persent { get; set; }
+        public int ClientId { get; set; }
+        public Credit() { }
+        public Credit(int ball, int monthlyPayment, int sum, int persent, int clientId)
+        {
+            Ball = ball;
+            MonthlyPayment = monthlyPayment;
+            Sum = sum;
+            Persent = persent;
+            ClientId = clientId;
+        }
+
     }
 
 }
